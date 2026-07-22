@@ -234,7 +234,7 @@
       <p>Selecione a data e a escala para verificar a distribuição operacional.</p>
     </div>
     <div class="btn-group">
-      <!-- Botão Visual Exato -->
+      <!-- Botão Visual Exato (Horizontal/Paisagem) -->
       <button class="btn btn-secondary" id="btnExportarDashboardVisualPDF">📸 Exportar PDF (Visual Exato)</button>
     </div>
   </div>
@@ -1010,11 +1010,12 @@ document.getElementById('btnSalvarMinimos').addEventListener('click', () => {
 // =========================================================
 // 1. FUNÇÃO UTILITÁRIA PARA EXPORTAÇÃO VISUAL EXATA (CANVAS -> PDF)
 // =========================================================
-async function exportarElementoParaPDFVisual(elementId, tituloDocumento) {
+async function exportarElementoParaPDFVisual(elementId, tituloDocumento, orientation = 'p') {
   showToast('Renderizando PDF com visual exato...');
 
   const { jsPDF } = window.jspdf;
-  const doc = new jsPDF('p', 'mm', 'a4');
+  const isLandscape = orientation === 'l' || orientation === 'landscape';
+  const doc = new jsPDF(isLandscape ? 'l' : 'p', 'mm', 'a4');
 
   const dataSel = document.getElementById('mapDate').value;
   const dataFormatada = new Date(dataSel + 'T00:00:00').toLocaleDateString('pt-BR');
@@ -1029,28 +1030,34 @@ async function exportarElementoParaPDFVisual(elementId, tituloDocumento) {
     });
 
     const imgData = canvas.toDataURL('image/png');
-    const imgWidth = 182; // Largura útil A4 em mm (com margem de 14mm de cada lado)
-    const pageHeight = 260; // Altura útil A4 em mm
+    
+    // Dimensões A4 em mm dependendo da orientação
+    const pdfPageWidth = isLandscape ? 297 : 210;
+    const pdfPageHeight = isLandscape ? 210 : 297;
+    
+    const margin = 14;
+    const imgWidth = pdfPageWidth - (margin * 2); 
+    const pageHeight = pdfPageHeight - 37; // Altura útil considerando margem e cabeçalho
     const imgHeight = (canvas.height * imgWidth) / canvas.width;
 
     let heightLeft = imgHeight;
-    let position = 26; // Recuo inicial para não encobrir o cabeçalho oficial
+    let position = 26; // Recuo inicial para o cabeçalho oficial
 
     const drawHeader = () => {
       doc.setFillColor(11, 24, 48);
-      doc.rect(0, 0, 210, 22, 'F');
+      doc.rect(0, 0, pdfPageWidth, 22, 'F');
       doc.setTextColor(255, 255, 255);
       doc.setFontSize(12);
       doc.setFont('helvetica', 'bold');
-      doc.text("GUARDA MUNICIPAL DO RECIFE", 14, 10);
+      doc.text("GUARDA MUNICIPAL DO RECIFE", margin, 10);
       doc.setFontSize(9);
       doc.setFont('helvetica', 'normal');
-      doc.text(`${tituloDocumento} — ESCALA ${db.escalaAtiva.toUpperCase()}`, 14, 16);
-      doc.text(`Data: ${dataFormatada}`, 160, 16);
+      doc.text(`${tituloDocumento} — ESCALA ${db.escalaAtiva.toUpperCase()}`, margin, 16);
+      doc.text(`Data: ${dataFormatada}`, pdfPageWidth - margin - 35, 16);
     };
 
     drawHeader();
-    doc.addImage(imgData, 'PNG', 14, position, imgWidth, imgHeight);
+    doc.addImage(imgData, 'PNG', margin, position, imgWidth, imgHeight);
     heightLeft -= pageHeight;
 
     // Suporte para quebra automática de páginas caso o conteúdo visual seja grande
@@ -1058,7 +1065,7 @@ async function exportarElementoParaPDFVisual(elementId, tituloDocumento) {
       position = heightLeft - imgHeight + 26;
       doc.addPage();
       drawHeader();
-      doc.addImage(imgData, 'PNG', 14, position, imgWidth, imgHeight);
+      doc.addImage(imgData, 'PNG', margin, position, imgWidth, imgHeight);
       heightLeft -= pageHeight;
     }
 
@@ -1067,7 +1074,7 @@ async function exportarElementoParaPDFVisual(elementId, tituloDocumento) {
       doc.setPage(i);
       doc.setFontSize(8);
       doc.setTextColor(150);
-      doc.text(`Documento gerado em ${new Date().toLocaleString('pt-BR')} — Página ${i} de ${totalPages}`, 14, 287);
+      doc.text(`Documento gerado em ${new Date().toLocaleString('pt-BR')} — Página ${i} de ${totalPages}`, margin, pdfPageHeight - 5);
     }
 
     doc.save(`${tituloDocumento.replace(/\s+/g, '_')}_Visual_${dataFormatada.replace(/\//g, '-')}.pdf`);
@@ -1078,14 +1085,14 @@ async function exportarElementoParaPDFVisual(elementId, tituloDocumento) {
   }
 }
 
-// Botão Visual Exato no Dashboard
+// Botão Visual Exato no Dashboard (EXPORTAÇÃO HORIZONTAL / LANDSCAPE)
 document.getElementById('btnExportarDashboardVisualPDF').addEventListener('click', () => {
-  exportarElementoParaPDFVisual('painelDashboardContainer', 'MAPA DE FORCA DASHBOARD');
+  exportarElementoParaPDFVisual('painelDashboardContainer', 'MAPA DE FORCA DASHBOARD', 'landscape');
 });
 
-// NOVO BOTÃO 2: Exportar PDF (Visual Exato) na Aba Relatórios
+// NOVO BOTÃO 2: Exportar PDF (Visual Exato) na Aba Relatórios (Mantido Portrait)
 document.getElementById('btnExportarVisualPDF').addEventListener('click', () => {
-  exportarElementoParaPDFVisual('relatoriosCapturaContainer', 'RELATORIO OPERACIONAL VISUAL');
+  exportarElementoParaPDFVisual('relatoriosCapturaContainer', 'RELATORIO OPERACIONAL VISUAL', 'portrait');
 });
 
 
