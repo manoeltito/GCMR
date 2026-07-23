@@ -1,0 +1,1461 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mapa de Força — Guarda Municipal do Recife</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com/">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  
+  <!-- Scripts para PDF Estruturado e Captura de Tela (Visual Exato) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
+  <style>
+    :root{
+      --navy-900:#0b1830;
+      --navy-800:#122349;
+      --navy-700:#1a2f63;
+      --blue-600:#2f6fed;
+      --blue-500:#4b83f0;
+      --blue-100:#e7effe;
+      --bg:#eef1f8;
+      --card:#ffffff;
+      --ink-900:#101828;
+      --ink-600:#475467;
+      --ink-400:#98a2b3;
+      --line:#e2e6f0;
+      --green:#12a454;
+      --green-bg:#e6f8ee;
+      --amber:#d78a13;
+      --amber-bg:#fdf3df;
+      --red:#d43d3d;
+      --red-bg:#fbe9e9;
+      --radius:14px;
+      --shadow-sm:0 1px 2px rgba(16,24,40,.06),0 1px 3px rgba(16,24,40,.06);
+      --shadow-md:0 4px 10px rgba(16,24,40,.07),0 2px 4px rgba(16,24,40,.05);
+      --shadow-lg:0 12px 28px rgba(16,24,40,.14);
+    }
+    *{box-sizing:border-box;}
+    html,body{margin:0;padding:0;}
+    body{
+      font-family:'Inter',system-ui,-apple-system,sans-serif;
+      background:var(--bg);
+      color:var(--ink-900);
+      -webkit-font-smoothing:antialiased;
+    }
+    .mono{font-family:'JetBrains Mono',monospace;}
+    button{font-family:inherit;cursor:pointer;}
+    ::selection{background:var(--blue-100);}
+
+    /* Topbar & Tabbar */
+    .topbar{
+      background:linear-gradient(135deg,var(--navy-900),var(--navy-700) 130%);
+      color:#fff;
+      padding:16px 28px;
+      display:flex;align-items:center;justify-content:space-between;
+      position:sticky;top:0;z-index:50;
+      box-shadow:var(--shadow-md);
+    }
+    .brand{display:flex;align-items:center;gap:12px;}
+    .brand-badge{
+      width:42px;height:42px;border-radius:10px;
+      background:rgba(255,255,255,.08);
+      display:flex;align-items:center;justify-content:center;
+      font-size:22px;border:1px solid rgba(255,255,255,.15);
+    }
+    .brand-text .eyebrow{font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:#9fb3e8;font-weight:600;}
+    .brand-text .title{font-size:17px;font-weight:800;letter-spacing:.01em;}
+    .clock-chip{
+      background:rgba(255,255,255,.08);
+      border:1px solid rgba(255,255,255,.14);
+      padding:6px 12px;border-radius:8px;
+      font-family:'JetBrains Mono',monospace;font-size:12px;
+    }
+    .tabbar{display:flex;gap:2px;background:var(--navy-800);padding:0 24px;overflow-x:auto;}
+    .tab{
+      padding:13px 20px;color:#a9bbe6;font-weight:600;font-size:13.5px;
+      border:none;background:transparent;border-bottom:3px solid transparent;
+      white-space:nowrap;transition:.15s;
+    }
+    .tab:hover{color:#fff;background:rgba(255,255,255,.04);}
+    .tab.active{color:#fff;border-bottom-color:var(--blue-500);background:rgba(255,255,255,.06);}
+
+    /* Layout & Componentes */
+    .view{display:none;max-width:1320px;margin:0 auto;padding:26px 24px 60px;animation:fadeIn .35s ease;}
+    .view.active{display:block;}
+    @keyframes fadeIn{from{opacity:0;transform:translateY(6px);}to{opacity:1;transform:translateY(0);}}
+    .view-header{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:22px;flex-wrap:wrap;}
+    .view-header h1{font-size:22px;font-weight:800;margin:0 0 4px;}
+    .view-header p{margin:0;color:var(--ink-600);font-size:13.5px;}
+
+    .btn-group{display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
+
+    .btn{
+      border-radius:9px;padding:10px 18px;font-weight:600;font-size:13.5px;
+      border:1px solid transparent;transition:.15s;display:inline-flex;align-items:center;gap:8px;
+    }
+    .btn-primary{background:var(--blue-600);color:#fff;box-shadow:0 1px 2px rgba(47,111,237,.3);}
+    .btn-primary:hover{background:#2860d6;transform:translateY(-1px);}
+    .btn-secondary{background:var(--navy-800);color:#fff;}
+    .btn-secondary:hover{background:var(--navy-700);transform:translateY(-1px);}
+    .btn-outline{background:#fff;color:var(--navy-800);border-color:var(--line);}
+    .btn-outline:hover{border-color:var(--blue-500);color:var(--blue-600);}
+    .btn-ghost{background:transparent;color:var(--ink-600);padding:8px 10px;}
+    .btn-ghost:hover{color:var(--red);}
+    .btn-sm{padding:6px 12px;font-size:12.5px;border-radius:7px;}
+
+    /* Contêineres Imprimíveis */
+    #painelDashboardContainer, #relatoriosCapturaContainer {
+      background: var(--bg);
+      padding: 12px;
+      border-radius: var(--radius);
+    }
+
+    /* Filterbar & Grid */
+    .filterbar{
+      background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+      padding:16px 20px;display:flex;gap:22px;align-items:flex-end;flex-wrap:wrap;
+      box-shadow:var(--shadow-sm);margin-bottom:22px;
+    }
+    .field{display:flex;flex-direction:column;gap:6px;min-width:160px;}
+    .field label{font-size:11.5px;font-weight:700;color:var(--ink-600);text-transform:uppercase;}
+    .field input,.field select{padding:9px 11px;border-radius:8px;border:1px solid var(--line);font-size:13.5px;}
+    .escala-toggle{display:flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;}
+    .escala-toggle button{border:none;background:#fbfcfe;padding:9px 16px;font-size:13px;font-weight:600;color:var(--ink-600);}
+    .escala-toggle button.active{background:var(--blue-600);color:#fff;}
+    .map-summary{margin-left:auto;display:flex;gap:10px;align-items:center;}
+    .summary-chip{background:var(--blue-100);color:var(--navy-800);padding:8px 14px;border-radius:8px;font-size:12.5px;font-weight:700;}
+
+    .quad-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;}
+    @media(max-width:980px){.quad-grid{grid-template-columns:1fr;}}
+    .quad-card{background:var(--card);border-radius:var(--radius);border:1px solid var(--line);box-shadow:var(--shadow-sm);overflow:hidden;display:flex;flex-direction:column;}
+    .quad-head{padding:16px 18px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line);}
+    .quad-title{display:flex;align-items:center;gap:10px;}
+    .quad-letter{width:36px;height:36px;border-radius:9px;background:var(--navy-800);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;}
+    .quad-title .name{font-weight:800;font-size:15px;}
+    .quad-title .sub{font-size:11.5px;color:var(--ink-400);}
+    .status-pill{font-size:11.5px;font-weight:700;padding:5px 11px;border-radius:20px;display:flex;align-items:center;gap:6px;}
+    .status-verde{background:var(--green-bg);color:var(--green);}
+    .status-amarelo{background:var(--amber-bg);color:var(--amber);}
+    .status-vermelho{background:var(--red-bg);color:var(--red);}
+
+    .quad-body{padding:16px 18px;flex:1;display:flex;flex-direction:column;gap:14px;}
+    .metric-row{display:flex;gap:12px;}
+    .metric{flex:1;background:#f8f9fd;border-radius:10px;padding:10px 12px;text-align:center;border:1px solid var(--line);}
+    .metric .num{font-size:22px;font-weight:800;font-family:'JetBrains Mono',monospace;}
+    .metric .lbl{font-size:10.5px;color:var(--ink-600);text-transform:uppercase;font-weight:600;}
+    .efetivo-bar{height:8px;border-radius:6px;background:#eef0f7;overflow:hidden;}
+    .efetivo-bar .fill{height:100%;border-radius:6px;transition:width .4s ease;}
+    .efetivo-caption{display:flex;justify-content:space-between;font-size:11px;color:var(--ink-600);margin-top:5px;}
+    .modal-dist{display:flex;flex-wrap:wrap;gap:7px;}
+    .dist-chip{font-size:11.5px;font-weight:700;padding:5px 10px;border-radius:7px;display:flex;gap:5px;align-items:center;border:1px solid var(--line);}
+    .quad-teamlist{display:flex;flex-direction:column;gap:8px;max-height:220px;overflow-y:auto;}
+    .team-row{display:flex;align-items:center;justify-content:space-between;background:#f8f9fd;border:1px solid var(--line);border-radius:9px;padding:9px 11px;font-size:12.5px;}
+    .team-badge{font-size:10.5px;font-weight:700;padding:3px 8px;border-radius:6px;color:#fff;}
+
+    /* Tabelas e Cards */
+    .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow-sm);padding:20px;}
+    table{width:100%;border-collapse:collapse;font-size:13.5px;}
+    th{text-align:left;padding:10px 12px;font-size:11px;text-transform:uppercase;color:var(--ink-600);border-bottom:2px solid var(--line);font-weight:700;}
+    td{padding:11px 12px;border-bottom:1px solid var(--line);vertical-align:middle;}
+    tr:hover td{background:#fafbfe;}
+    .tag{display:inline-flex;align-items:center;gap:5px;padding:4px 9px;border-radius:6px;font-size:11.5px;font-weight:700;color:#fff;}
+    .tag-quad{background:var(--navy-800);color:#fff;padding:4px 9px;border-radius:6px;font-size:11.5px;font-weight:700;}
+    .tag-escala{padding:4px 9px;border-radius:6px;font-size:11.5px;font-weight:700;background:var(--blue-100);color:var(--navy-800);}
+
+    /* Stats Strip */
+    .stats-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px;}
+    @media(max-width:780px){.stats-strip{grid-template-columns:repeat(2,1fr);}}
+    .big-stat{text-align:center;padding:16px 10px;background:var(--card);border:1px solid var(--line);border-radius:var(--radius);}
+    .big-stat .n{font-size:28px;font-weight:800;font-family:'JetBrains Mono',monospace;color:var(--navy-800);}
+    .big-stat .l{font-size:11.5px;color:var(--ink-600);font-weight:600;margin-top:4px;text-transform:uppercase;}
+
+    /* Modais */
+    .overlay{position:fixed;inset:0;background:rgba(11,24,48,.55);backdrop-filter:blur(2px);display:none;align-items:flex-start;justify-content:center;z-index:200;padding:40px 20px;overflow-y:auto;}
+    .overlay.open{display:flex;}
+    .modal{background:#fff;border-radius:16px;width:100%;max-width:680px;box-shadow:var(--shadow-lg);}
+    .modal-head{padding:20px 24px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;}
+    .modal-head h3{margin:0;font-size:17px;font-weight:800;}
+    .modal-close{border:none;background:#f2f4f9;width:30px;height:30px;border-radius:8px;font-size:16px;}
+    .modal-body{padding:22px 24px;max-height:66vh;overflow-y:auto;}
+    .modal-foot{padding:16px 24px;border-top:1px solid var(--line);display:flex;justify-content:flex-end;gap:10px;}
+    .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+    .form-grid .full{grid-column:1/-1;}
+    .form-field{display:flex;flex-direction:column;gap:6px;}
+    .form-field label{font-size:12px;font-weight:700;color:var(--ink-600);}
+    .form-field input,.form-field select{padding:10px 12px;border-radius:8px;border:1px solid var(--line);font-size:13.5px;}
+
+    .integrante-row{display:grid;grid-template-columns:1fr auto;gap:8px;margin-bottom:8px;align-items:center;}
+
+    /* Configs */
+    .config-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+    @media(max-width:980px){.config-grid{grid-template-columns:1fr;}}
+    .min-row,.modalidade-row{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--line);}
+    .mod-icon{width:34px;height:34px;border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:16px;color:#fff;}
+    .mod-info{flex:1;}
+    .mod-info .nm{font-weight:700;font-size:13.5px;}
+    .mod-info .sg{font-size:11px;color:var(--ink-400);}
+
+    .toast{position:fixed;bottom:26px;right:26px;background:var(--navy-900);color:#fff;padding:13px 20px;border-radius:10px;font-size:13.5px;font-weight:600;transform:translateY(120%);opacity:0;transition:.28s ease;z-index:400;}
+    .toast.show{transform:translateY(0);opacity:1;}
+    .empty-state{text-align:center;padding:40px 20px;color:var(--ink-400);}
+  </style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="brand">
+    <div class="brand-badge">🛡️</div>
+    <div class="brand-text">
+      <div class="eyebrow">Guarda Municipal do Recife</div>
+      <div class="title">Mapa de Força</div>
+    </div>
+  </div>
+  <div class="topbar-right">
+    <span id="clockChip" class="clock-chip">--/--/---- --:--:--</span>
+  </div>
+</div>
+
+<div class="tabbar">
+  <button class="tab active" data-view="dashboard">📊 Dashboard</button>
+  <button class="tab" data-view="equipes">👥 Equipes</button>
+  <button class="tab" data-view="config">⚙️ Configurações</button>
+  <button class="tab" data-view="relatorios">📄 Relatórios</button>
+</div>
+
+<!-- DASHBOARD -->
+<section id="view-dashboard" class="view active">
+  <div class="view-header">
+    <div>
+      <h1>Mapa de Força do dia</h1>
+      <p>Selecione a data e a escala para verificar a distribuição operacional.</p>
+    </div>
+    <div class="btn-group">
+      <!-- Botão Visual Exato (Horizontal/Paisagem) -->
+      <button class="btn btn-secondary" id="btnExportarDashboardVisualPDF">📸 Exportar PDF (Visual Exato)</button>
+    </div>
+  </div>
+
+  <!-- Contêiner capturável do painel -->
+  <div id="painelDashboardContainer">
+    <div class="filterbar">
+      <div class="field">
+        <label>Data</label>
+        <input type="date" id="mapDate">
+      </div>
+      <div class="field">
+        <label>Escala</label>
+        <div class="escala-toggle">
+          <button class="active" data-escala="Total" id="escTotal">Total</button>
+          <button data-escala="Extra" id="escExt">Extra</button>
+        </div>
+      </div>
+      <div class="map-summary" id="mapSummary">
+        <span class="summary-chip" id="sumAgentes">👥 0 agentes</span>
+        <span class="summary-chip" id="sumEquipes">Central: 0 equipes</span>
+      </div>
+    </div>
+
+    <div class="quad-grid" id="dashboardGrid"></div>
+  </div>
+</section>
+
+<!-- EQUIPES -->
+<section id="view-equipes" class="view">
+  <div class="view-header">
+    <div>
+      <h1>Cadastro de Equipes</h1>
+      <p>Gerencie as equipes operacionais, integrantes e dados de contato.</p>
+    </div>
+    <button class="btn btn-primary" id="btnNovaEquipe">＋ Nova Equipe</button>
+  </div>
+
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;margin-bottom:16px;gap:12px;flex-wrap:wrap;">
+      <input type="text" class="field" id="searchEquipe" placeholder="Buscar por nome..." style="width:240px;padding:8px 12px;border-radius:8px;border:1px solid var(--line);">
+      <div style="display:flex;gap:8px;">
+        <select id="filterQuadrante" style="padding:8px;border-radius:8px;border:1px solid var(--line);">
+          <option value="">Todos os Quadrantes</option>
+          <option value="A">Quadrante A</option>
+          <option value="B">Quadrante B</option>
+          <option value="C">Quadrante C</option>
+        </select>
+        <select id="filterModalidade" style="padding:8px;border-radius:8px;border:1px solid var(--line);"></select>
+      </div>
+    </div>
+    <div style="overflow-x:auto;">
+      <table>
+        <thead>
+          <tr><th>Equipe</th><th>Modalidade</th><th>Quadrante</th><th>Escala</th><th>Integrantes e Contatos</th><th style="text-align:right">Ações</th></tr>
+        </thead>
+        <tbody id="equipesTableBody"></tbody>
+      </table>
+    </div>
+    <div id="equipesEmpty" class="empty-state" style="display:none;">
+      <div>🗂️ Nenhuma equipe encontrada.</div>
+    </div>
+  </div>
+</section>
+
+<!-- CONFIGURAÇÕES -->
+<section id="view-config" class="view">
+  <div class="view-header">
+    <div>
+      <h1>Configurações</h1>
+      <p>Ajuste o efetivo mínimo dos quadrantes, cadastre modalidades e faça o registro geral dos agentes.</p>
+    </div>
+  </div>
+
+  <div class="config-grid">
+    <div style="display:flex; flex-direction:column; gap:20px;">
+      <div class="card">
+        <div style="font-weight:800;text-transform:uppercase;font-size:12px;margin-bottom:12px;">Efetivo Mínimo por Quadrante</div>
+        <div id="minEfetivoBox"></div>
+        <button class="btn btn-primary btn-sm" id="btnSalvarMinimos" style="margin-top:16px;">Salvar Mínimos</button>
+      </div>
+
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+          <span style="font-weight:800;text-transform:uppercase;font-size:12px;">Modalidades</span>
+          <button class="btn btn-outline btn-sm" id="btnNovaModalidade">＋ Nova Modalidade</button>
+        </div>
+        <div id="modalidadesBox"></div>
+      </div>
+    </div>
+
+    <!-- PAINEL AGENTES NAS CONFIGURAÇÕES -->
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+        <span style="font-weight:800;text-transform:uppercase;font-size:12px;">Cadastro de Agentes</span>
+      </div>
+      <form id="formAgente" onsubmit="event.preventDefault(); salvarAgente();" style="display:flex;flex-direction:column;gap:10px;margin-bottom:20px;background:#f8f9fd;padding:14px;border-radius:10px;border:1px solid var(--line);">
+        <input type="hidden" id="ag_id">
+        <div class="form-grid">
+          <div class="form-field">
+            <label>Matrícula</label>
+            <input type="text" id="ag_matricula" placeholder="Ex: 123" required>
+          </div>
+          <div class="form-field">
+            <label>Nome do Agente</label>
+            <input type="text" id="ag_nome" placeholder="Ex: Agente Silva" required>
+          </div>
+          <div class="form-field full">
+            <label>Telefone / WhatsApp</label>
+            <input type="text" id="ag_telefone" placeholder="Ex: (81) 98765-4321">
+          </div>
+        </div>
+        <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:4px;">
+          <button type="button" class="btn btn-outline btn-sm" onclick="cancelarEdicaoAgente()">Cancelar</button>
+          <button type="submit" class="btn btn-primary btn-sm" id="btnSalvarAgente">Salvar Agente</button>
+        </div>
+      </form>
+
+      <div style="margin-bottom:10px;">
+        <input type="text" id="searchAgenteConfig" placeholder="🔍 Buscar agente por nome ou matrícula..." style="width:100%;padding:8px 12px;border-radius:8px;border:1px solid var(--line);font-size:12.5px;">
+      </div>
+
+      <div style="max-height:360px;overflow-y:auto;">
+        <table>
+          <thead>
+            <tr><th>Matrícula</th><th>Nome</th><th>Telefone</th><th style="text-align:right">Ações</th></tr>
+          </thead>
+          <tbody id="agentesTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- RELATÓRIOS -->
+<section id="view-relatorios" class="view">
+  <div class="view-header">
+    <div>
+      <h1>Relatório Operacional de Efetivo</h1>
+      <p>Visão consolidada do Dashboard com totais, quantitativos por quadrante e contatos telefônicos.</p>
+    </div>
+    <div class="btn-group">
+      <!-- BOTÃO 1: EXISTENTE -->
+      <button class="btn btn-primary" id="btnGerarPDF">📥 Exportar PDF do Relatório</button>
+      
+      <!-- BOTÃO 2: NOVO (IMPRESSÃO DE VISUAL EXATO DA PÁGINA) -->
+      <button class="btn btn-secondary" id="btnExportarVisualPDF">🖼️ Imprimir PDF (Visual Exato)</button>
+    </div>
+  </div>
+
+  <!-- Envolto por um contêiner para captura exata -->
+  <div id="relatoriosCapturaContainer">
+    <!-- Cards de Totais Gerais -->
+    <div class="stats-strip">
+      <div class="big-stat">
+        <div class="n" id="repTotalAgentes">0</div>
+        <div class="l">Total de Agentes</div>
+      </div>
+      <div class="big-stat">
+        <div class="n" id="repTotalEquipes">0</div>
+        <div class="l">Total de Equipes</div>
+      </div>
+      <div class="big-stat">
+        <div class="n" id="repMetaTotal">0</div>
+        <div class="l">Efetivo Mínimo Geral</div>
+      </div>
+      <div class="big-stat">
+        <div class="n" id="repCoberturaPct">0%</div>
+        <div class="l">Cobertura Geral</div>
+      </div>
+    </div>
+
+    <!-- REPLICAÇÃO DO DASHBOARD NA ABA RELATÓRIOS -->
+    <div class="card" style="margin-bottom:20px; background:transparent; padding:0; border:none; box-shadow:none;">
+      <h3 style="margin-top:0;font-size:16px; margin-bottom:14px;">Espelho do Mapa de Força (Dashboard)</h3>
+      <div class="quad-grid" id="relatoriosDashboardGrid"></div>
+    </div>
+
+    <!-- Tabela de Resumo por Quadrante -->
+    <div class="card" style="margin-bottom:20px;">
+      <h3 style="margin-top:0;font-size:16px;">Resumo por Quadrante</h3>
+      <table id="tblResumoQuadrante">
+        <thead>
+          <tr>
+            <th>Quadrante</th>
+            <th>Equipes Alocadas</th>
+            <th>Efetivo Presente</th>
+            <th>Efetivo Mínimo</th>
+            <th>Status / Cobertura</th>
+          </tr>
+        </thead>
+        <tbody id="bodyResumoQuadrante"></tbody>
+      </table>
+    </div>
+
+    <!-- Tabela Detalhada com Telefones -->
+    <div class="card">
+      <h3 style="margin-top:0;font-size:16px;">Detalhamento das Equipes e Contatos Telefônicos</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Quadrante</th>
+            <th>Equipe</th>
+            <th>Modalidade</th>
+            <th>Escala</th>
+            <th>Agente</th>
+            <th>Matrícula</th>
+            <th>Telefone / Contato</th>
+          </tr>
+        </thead>
+        <tbody id="bodyDetalhamentoAgentes"></tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- MODAL EQUIPE -->
+<div class="overlay" id="modalEquipe">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 id="modalEquipeTitle">Nova Equipe</h3>
+      <button class="modal-close" onclick="closeModals()">✕</button>
+    </div>
+    <div class="modal-body">
+      <form id="formEquipe">
+        <input type="hidden" id="eq_id">
+        <div class="form-grid">
+          <div class="form-field full">
+            <label>Nome da Equipe</label>
+            <input type="text" id="eq_nome" required placeholder="Ex: VTRA-01">
+          </div>
+          <div class="form-field">
+            <label>Modalidade</label>
+            <select id="eq_modalidade" required></select>
+          </div>
+          <div class="form-field">
+            <label>Quadrante</label>
+            <select id="eq_quadrante" required>
+              <option value="A">Quadrante A</option>
+              <option value="B">Quadrante B</option>
+              <option value="C">Quadrante C</option>
+            </select>
+          </div>
+          <div class="form-field full">
+            <label>Escala</label>
+            <select id="eq_escala" required>
+              <option value="Ordinário">Ordinário</option>
+              <option value="Extra">Extra</option>
+            </select>
+          </div>
+        </div>
+
+        <div style="margin-top:20px;font-weight:800;font-size:13px;display:flex;justify-content:space-between;align-items:center;">
+          <span>Integrantes Selecionados</span>
+        </div>
+        
+        <!-- BUSCA E ADIÇÃO DE AGENTE -->
+        <div style="display:flex; gap:8px; margin-top:10px; margin-bottom:14px;">
+          <input type="text" id="searchAgenteModalInput" placeholder="🔍 Buscar por Matrícula ou Nome..." style="flex:1; padding:8px 12px; border-radius:8px; border:1px solid var(--line); font-size:13px;" oninput="filtrarDropdownAgentes()">
+          <select id="selectAgenteAdd" style="flex:1.5; padding:8px 12px; border-radius:8px; border:1px solid var(--line); font-size:13px;">
+            <option value="">Selecione um agente...</option>
+          </select>
+          <button type="button" class="btn btn-outline btn-sm" onclick="adicionarAgenteSelecionado()">＋ Incluir</button>
+        </div>
+
+        <div id="integrantesList" style="margin-top:10px;"></div>
+      </form>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-outline" onclick="closeModals()">Cancelar</button>
+      <button class="btn btn-primary" onclick="salvarEquipe()">Salvar Equipe</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL MODALIDADE -->
+<div class="overlay" id="modalModalidade">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 id="modalModTitle">Nova Modalidade</h3>
+      <button class="modal-close" onclick="closeModals()">✕</button>
+    </div>
+    <div class="modal-body">
+      <form id="formModalidade">
+        <input type="hidden" id="mod_id">
+        <div class="form-grid">
+          <div class="form-field">
+            <label>Nome</label>
+            <input type="text" id="mod_nome" required placeholder="Ex: Viatura">
+          </div>
+          <div class="form-field">
+            <label>Sigla</label>
+            <input type="text" id="mod_sigla" required placeholder="Ex: VTR">
+          </div>
+          <div class="form-field">
+            <label>Ícone (Emoji)</label>
+            <input type="text" id="mod_icone" required placeholder="🚓">
+          </div>
+          <div class="form-field">
+            <label>Cor</label>
+            <input type="color" id="mod_cor" value="#2f6fed" style="height:40px;padding:2px;">
+          </div>
+        </div>
+      </form>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-outline" onclick="closeModals()">Cancelar</button>
+      <button class="btn btn-primary" onclick="salvarModalidade()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast">Ação concluída com sucesso!</div>
+
+<script>
+const DEFAULT_MODALIDADES = [
+  { id: 'vtr', nome: 'Viatura VTR', sigla: 'VTR', icone: '🚓', cor: '#2f6fed' },
+  { id: 'moto', nome: 'Motopatrulha', sigla: 'MT', icone: '🏍️', cor: '#d78a13' },
+  { id: 'bike', nome: 'Bike', sigla: 'BC', icone: '🚲', cor: '#12a454' },
+  { id: 'ape', nome: 'A Pé', sigla: 'PT', icone: '🚶', cor: '#7c3aed' },
+  { id: 'romu', nome: 'Ronda Ostensiva Municipal', sigla: 'ROMU', icone: '🛡️', cor: '#d43d3d' }
+];
+
+const DEFAULT_AGENTES = [
+  { id: 'ag_123', matricula: '123', nome: 'Agente Silva', telefone: '(81) 98765-4321' },
+  { id: 'ag_124', matricula: '124', nome: 'Agente Santos', telefone: '(81) 98765-4322' },
+  { id: 'ag_125', matricula: '125', nome: 'Agente Alves', telefone: '(81) 98765-4323' },
+  { id: 'ag_126', matricula: '126', nome: 'Agente Souza', telefone: '(81) 98765-4324' },
+  { id: 'ag_127', matricula: '127', nome: 'Agente Lima', telefone: '(81) 98765-4325' },
+  { id: 'ag_128', matricula: '128', nome: 'Agente Costa', telefone: '(81) 98765-4326' },
+  { id: 'ag_129', matricula: '129', nome: 'Agente Oliveira', telefone: '(81) 98765-4327' },
+  { id: 'ag_130', matricula: '130', nome: 'Agente Pereira', telefone: '(81) 98765-4328' },
+  { id: 'ag_131', matricula: '131', nome: 'Agente Mota', telefone: '(81) 98765-4329' },
+  { id: 'ag_132', matricula: '132', nome: 'Agente Neto', telefone: '(81) 98765-4330' },
+  { id: 'ag_133', matricula: '133', nome: 'Agente Ferreira', telefone: '(81) 98765-4331' },
+  { id: 'ag_134', matricula: '134', nome: 'Agente Rodrigues', telefone: '(81) 98765-4332' },
+  { id: 'ag_135', matricula: '135', nome: 'Agente Martins', telefone: '(81) 98765-4333' },
+  { id: 'ag_136', matricula: '136', nome: 'Agente Gomez', telefone: '(81) 98765-4334' }
+];
+
+const DEFAULT_EQUIPES = [
+  { id: 'eq_1', nome: 'VTRA-01', modalidade: 'moto', quadrante: 'A', escala: 'Ordinário', integrantes: [{agenteId:'ag_123'}, {agenteId:'ag_124'}] },
+  { id: 'eq_2', nome: 'BCA-01', modalidade: 'bike', quadrante: 'A', escala: 'Ordinário', integrantes: [{agenteId:'ag_125'}, {agenteId:'ag_126'}] },
+  { id: 'eq_3', nome: 'VTRC-01', modalidade: 'vtr', quadrante: 'A', escala: 'Extra', integrantes: [{agenteId:'ag_127'}, {agenteId:'ag_128'}] },
+  
+  { id: 'eq_4', nome: 'MTB-01', modalidade: 'moto', quadrante: 'B', escala: 'Ordinário', integrantes: [{agenteId:'ag_129'}, {agenteId:'ag_130'}] },
+  { id: 'eq_5', nome: 'PTB-01', modalidade: 'ape', quadrante: 'B', escala: 'Extra', integrantes: [{agenteId:'ag_131'}, {agenteId:'ag_132'}] },
+  { id: 'eq_6', nome: 'ROMU-01', modalidade: 'romu', quadrante: 'B', escala: 'Ordinário', integrantes: [{agenteId:'ag_133'}, {agenteId:'ag_134'}] },
+
+  { id: 'eq_7', nome: 'VTRC-01', modalidade: 'vtr', quadrante: 'C', escala: 'Extra', integrantes: [{agenteId:'ag_135'}, {agenteId:'ag_136'}] }
+];
+
+const DEFAULT_MINIMOS = { A: 4, B: 6, C: 4 };
+
+let db = {
+  modalidades: JSON.parse(localStorage.getItem('gmr_modalidades')) || DEFAULT_MODALIDADES,
+  agentes: JSON.parse(localStorage.getItem('gmr_agentes')) || DEFAULT_AGENTES,
+  equipes: JSON.parse(localStorage.getItem('gmr_equipes')) || DEFAULT_EQUIPES,
+  minimos: JSON.parse(localStorage.getItem('gmr_minimos')) || DEFAULT_MINIMOS,
+  escalaAtiva: 'Total' // Padrão 'Total'
+};
+
+// Converte equipes antigas (se houver no localStorage) para estrutura por ID do agente
+db.equipes.forEach(eq => {
+  if (eq.integrantes) {
+    eq.integrantes = eq.integrantes.map(i => {
+      if (i.agenteId) return i;
+      let achado = db.agentes.find(a => a.matricula === i.matricula || a.nome === i.nome);
+      if (!achado) {
+        achado = { id: 'ag_' + Date.now() + Math.random(), matricula: i.matricula || '', nome: i.nome || 'Agente', telefone: i.telefone || '' };
+        db.agentes.push(achado);
+      }
+      return { agenteId: achado.id };
+    });
+  }
+});
+
+function saveDB() {
+  localStorage.setItem('gmr_modalidades', JSON.stringify(db.modalidades));
+  localStorage.setItem('gmr_agentes', JSON.stringify(db.agentes));
+  localStorage.setItem('gmr_equipes', JSON.stringify(db.equipes));
+  localStorage.setItem('gmr_minimos', JSON.stringify(db.minimos));
+  renderAll();
+}
+
+function getAgenteById(id) {
+  return db.agentes.find(a => a.id === id) || { id, matricula: 'N/A', nome: 'Desconhecido', telefone: '' };
+}
+
+function showToast(msg) {
+  const toast = document.getElementById('toast');
+  toast.innerText = msg;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 3000);
+}
+
+function updateClock() {
+  const now = new Date();
+  document.getElementById('clockChip').innerText = now.toLocaleDateString('pt-BR') + ' · ' + now.toLocaleTimeString('pt-BR');
+}
+setInterval(updateClock, 1000);
+updateClock();
+
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById(`view-${tab.dataset.view}`).classList.add('active');
+    if(tab.dataset.view === 'relatorios') renderRelatoriosView();
+  });
+});
+
+document.querySelectorAll('.escala-toggle button').forEach(btn => {
+  btn.addEventListener('click', (e) => {
+    document.querySelectorAll('.escala-toggle button').forEach(b => b.classList.remove('active'));
+    e.target.classList.add('active');
+    db.escalaAtiva = e.target.dataset.escala;
+    renderDashboard();
+    renderRelatoriosView();
+  });
+});
+
+document.getElementById('mapDate').valueAsDate = new Date();
+
+function renderAll() {
+  renderDashboard();
+  renderEquipes();
+  renderConfig();
+  renderAgentesTable();
+  renderModalidadesSelects();
+  renderRelatoriosView();
+}
+
+// Gerador de cards dos quadrantes
+function generateDashboardGridHTML() {
+  const quads = ['A', 'B', 'C'];
+  let totalAgentesGeral = 0;
+  let totalEquipesGeral = 0;
+  let html = '';
+
+  quads.forEach(q => {
+    const min = db.minimos[q] || 0;
+    
+    // LÓGICA DE FILTRAGEM POR ESCALA (Total x Extra)
+    const equipesQuad = db.equipes.filter(e => {
+      if (e.quadrante !== q) return false;
+      if (db.escalaAtiva === 'Extra') {
+        return e.escala === 'Extra';
+      }
+      return true; // Se for 'Total', traz todas as equipes (Ordinário + Extra)
+    });
+    
+    let agentesQuad = 0;
+    const modCount = {};
+
+    equipesQuad.forEach(eq => {
+      const qtdAgentes = eq.integrantes ? eq.integrantes.length : 0;
+      agentesQuad += qtdAgentes;
+      modCount[eq.modalidade] = (modCount[eq.modalidade] || 0) + 1;
+    });
+
+    totalAgentesGeral += agentesQuad;
+    totalEquipesGeral += equipesQuad.length;
+
+    const pct = min > 0 ? Math.min(100, Math.round((agentesQuad / min) * 100)) : 100;
+    
+    let statusClass = 'status-verde';
+    let statusText = '🟢 Efetivo Completo';
+    let barColor = 'var(--green)';
+
+    if (agentesQuad < min) {
+      if (pct < 50) {
+        statusClass = 'status-vermelho';
+        statusText = '🔴 Efetivo Crítico';
+        barColor = 'var(--red)';
+      } else {
+        statusClass = 'status-amarelo';
+        statusText = '🟡 Efetivo Parcial';
+        barColor = 'var(--amber)';
+      }
+    }
+
+    let modHtml = '';
+    for (const [mId, count] of Object.entries(modCount)) {
+      const mData = db.modalidades.find(m => m.id === mId);
+      if (mData) {
+        modHtml += `<span class="dist-chip" style="background:${mData.cor}18;color:${mData.cor};border-color:${mData.cor}40;">${mData.icone} ${mData.sigla} · ${count}</span>`;
+      }
+    }
+
+    let teamsHtml = '';
+    if (equipesQuad.length === 0) {
+      teamsHtml = `<div class="empty-state" style="padding:10px;">Nenhuma equipe alocada</div>`;
+    } else {
+      equipesQuad.forEach(eq => {
+        const mData = db.modalidades.find(m => m.id === eq.modalidade) || { icone: '🚓', nome: 'Outro', sigla: 'VTR', cor: '#333' };
+        teamsHtml += `
+          <div class="team-row">
+            <div>
+              <div style="font-weight:700;">${eq.nome} <span style="font-size:10px; opacity:0.7; font-weight:normal;">(${eq.escala})</span></div>
+              <div style="color:var(--ink-600);font-size:11px;">${mData.icone} ${mData.nome} · ${eq.integrantes ? eq.integrantes.length : 0} integrante(s)</div>
+            </div>
+            <span class="team-badge" style="background:${mData.cor};">${mData.sigla}</span>
+          </div>
+        `;
+      });
+    }
+
+    const dateFormatted = new Date(document.getElementById('mapDate').value + 'T00:00:00').toLocaleDateString('pt-BR');
+
+    html += `
+      <div class="quad-card">
+        <div class="quad-head">
+          <div class="quad-title">
+            <div class="quad-letter">${q}</div>
+            <div>
+              <div class="name">Quadrante ${q}</div>
+              <div class="sub">${dateFormatted} · ${db.escalaAtiva}</div>
+            </div>
+          </div>
+          <span class="status-pill ${statusClass}">${statusText}</span>
+        </div>
+        <div class="quad-body">
+          <div class="metric-row">
+            <div class="metric"><div class="num">${equipesQuad.length}</div><div class="lbl">Equipes</div></div>
+            <div class="metric"><div class="num">${agentesQuad}</div><div class="lbl">Agentes</div></div>
+            <div class="metric"><div class="num">${min}</div><div class="lbl">Mínimo</div></div>
+          </div>
+          <div>
+            <div class="efetivo-bar"><div class="fill" style="width:${pct}%;background:${barColor};"></div></div>
+            <div class="efetivo-caption"><span>${agentesQuad} de ${min} mínimo</span><span>${pct}%</span></div>
+          </div>
+          <div>
+            <div style="font-size:11px;font-weight:700;color:var(--ink-600);text-transform:uppercase;margin-bottom:8px;">Distribuição por modalidade</div>
+            <div class="modal-dist">${modHtml || '<span style="font-size:11px;color:var(--ink-400);">Nenhuma</span>'}</div>
+          </div>
+          <div>
+            <div style="font-size:11px;font-weight:700;color:var(--ink-600);text-transform:uppercase;margin-bottom:8px;">Equipes alocadas</div>
+            <div class="quad-teamlist">${teamsHtml}</div>
+          </div>
+        </div>
+      </div>
+    `;
+  });
+
+  return { html, totalAgentesGeral, totalEquipesGeral };
+}
+
+function renderDashboard() {
+  const grid = document.getElementById('dashboardGrid');
+  const res = generateDashboardGridHTML();
+  
+  grid.innerHTML = res.html;
+  document.getElementById('sumAgentes').innerText = `👥 ${res.totalAgentesGeral} agentes`;
+  document.getElementById('sumEquipes').innerText = `Central: ${res.totalEquipesGeral} equipes`;
+}
+
+function renderEquipes() {
+  const tbody = document.getElementById('equipesTableBody');
+  const search = document.getElementById('searchEquipe').value.toLowerCase();
+  const fQuad = document.getElementById('filterQuadrante').value;
+  const fMod = document.getElementById('filterModalidade').value;
+
+  tbody.innerHTML = '';
+
+  const filtered = db.equipes.filter(e => {
+    const matchSearch = e.nome.toLowerCase().includes(search);
+    const matchQuad = !fQuad || e.quadrante === fQuad;
+    const matchMod = !fMod || e.modalidade === fMod;
+    return matchSearch && matchQuad && matchMod;
+  });
+
+  if(filtered.length === 0) {
+    document.getElementById('equipesEmpty').style.display = 'block';
+    return;
+  }
+  document.getElementById('equipesEmpty').style.display = 'none';
+
+  filtered.forEach(eq => {
+    const mData = db.modalidades.find(m => m.id === eq.modalidade) || { icone: '🚓', sigla: 'VTR', cor: '#333' };
+    
+    let integrantesHtml = '<ul style="margin:0;padding-left:16px;font-size:12px;">';
+    if(eq.integrantes) {
+      eq.integrantes.forEach(i => {
+        const ag = getAgenteById(i.agenteId);
+        integrantesHtml += `<li><strong>${ag.nome}</strong> (Mat. ${ag.matricula}) - 📞 ${ag.telefone || 'Sem fone'}</li>`;
+      });
+    }
+    integrantesHtml += '</ul>';
+
+    tbody.innerHTML += `
+      <tr>
+        <td><strong>${eq.nome}</strong></td>
+        <td><span class="tag" style="background:${mData.cor};">${mData.icone} ${mData.sigla}</span></td>
+        <td><span class="tag-quad">${eq.quadrante}</span></td>
+        <td><span class="tag-escala">${eq.escala}</span></td>
+        <td>${integrantesHtml}</td>
+        <td style="text-align:right;">
+          <button class="btn btn-outline btn-sm" onclick="openEquipeModal('${eq.id}')">Editar</button>
+          <button class="btn btn-ghost btn-sm" onclick="deleteEquipe('${eq.id}')">🗑️</button>
+        </td>
+      </tr>
+    `;
+  });
+}
+
+function renderConfig() {
+  const minBox = document.getElementById('minEfetivoBox');
+  minBox.innerHTML = '';
+  ['A', 'B', 'C'].forEach(q => {
+    minBox.innerHTML += `
+      <div class="min-row">
+        <div class="quad-letter">${q}</div>
+        <div style="flex:1;font-weight:600;font-size:13.5px;">Quadrante ${q}</div>
+        <input type="number" min="0" id="min_${q}" value="${db.minimos[q] || 0}" style="width:80px;padding:6px;border-radius:6px;border:1px solid var(--line);">
+      </div>
+    `;
+  });
+
+  const modBox = document.getElementById('modalidadesBox');
+  modBox.innerHTML = '';
+  db.modalidades.forEach(m => {
+    modBox.innerHTML += `
+      <div class="modalidade-row">
+        <div class="mod-icon" style="background:${m.cor};">${m.icone}</div>
+        <div class="mod-info">
+          <div class="nm">${m.nome}</div>
+          <div class="sg">${m.sigla}</div>
+        </div>
+        <div style="width:20px;height:20px;border-radius:4px;background:${m.cor};"></div>
+        <button class="btn btn-outline btn-sm" onclick="openModalidadeModal('${m.id}')">Editar</button>
+        <button class="btn btn-ghost btn-sm" onclick="deleteModalidade('${m.id}')">🗑️</button>
+      </div>
+    `;
+  });
+}
+
+// CADASTRO E GERENCIAMENTO DE AGENTES
+function renderAgentesTable() {
+  const tbody = document.getElementById('agentesTableBody');
+  const search = (document.getElementById('searchAgenteConfig') ? document.getElementById('searchAgenteConfig').value : '').toLowerCase();
+  tbody.innerHTML = '';
+
+  const filtrados = db.agentes.filter(a => 
+    a.nome.toLowerCase().includes(search) || a.matricula.toLowerCase().includes(search)
+  );
+
+  if (filtrados.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="4" style="text-align:center;color:var(--ink-400);padding:14px;">Nenhum agente cadastrado.</td></tr>`;
+    return;
+  }
+
+  filtrados.forEach(a => {
+    tbody.innerHTML += `
+      <tr>
+        <td><strong>${a.matricula}</strong></td>
+        <td>${a.nome}</td>
+        <td>${a.telefone || '-'}</td>
+        <td style="text-align:right;">
+          <button class="btn btn-outline btn-sm" onclick="editarAgente('${a.id}')">Editar</button>
+          <button class="btn btn-ghost btn-sm" onclick="deletarAgente('${a.id}')">🗑️</button>
+        </td>
+      </tr>
+    `;
+  });
+}
+
+function salvarAgente() {
+  const id = document.getElementById('ag_id').value;
+  const mat = document.getElementById('ag_matricula').value.trim();
+  const nome = document.getElementById('ag_nome').value.trim();
+  const tel = document.getElementById('ag_telefone').value.trim();
+
+  if (!mat || !nome) return alert('Matrícula e Nome são obrigatórios.');
+
+  if (id) {
+    const idx = db.agentes.findIndex(a => a.id === id);
+    if (idx !== -1) {
+      db.agentes[idx] = { id, matricula: mat, nome, telefone: tel };
+    }
+  } else {
+    // Evita matriculas duplicadas
+    if (db.agentes.some(a => a.matricula === mat)) {
+      return alert('Já existe um agente cadastrado com esta matrícula.');
+    }
+    db.agentes.push({
+      id: 'ag_' + Date.now(),
+      matricula: mat,
+      nome,
+      telefone: tel
+    });
+  }
+
+  cancelarEdicaoAgente();
+  saveDB();
+  showToast('Agente salvo com sucesso!');
+}
+
+function editarAgente(id) {
+  const ag = db.agentes.find(a => a.id === id);
+  if (!ag) return;
+  document.getElementById('ag_id').value = ag.id;
+  document.getElementById('ag_matricula').value = ag.matricula;
+  document.getElementById('ag_nome').value = ag.nome;
+  document.getElementById('ag_telefone').value = ag.telefone || '';
+  document.getElementById('btnSalvarAgente').innerText = 'Atualizar Agente';
+}
+
+function cancelarEdicaoAgente() {
+  document.getElementById('formAgente').reset();
+  document.getElementById('ag_id').value = '';
+  document.getElementById('btnSalvarAgente').innerText = 'Salvar Agente';
+}
+
+function deletarAgente(id) {
+  if (confirm('Deseja remover este agente?')) {
+    db.agentes = db.agentes.filter(a => a.id !== id);
+    // Remove o agente de equipes existentes
+    db.equipes.forEach(eq => {
+      if (eq.integrantes) {
+        eq.integrantes = eq.integrantes.filter(i => i.agenteId !== id);
+      }
+    });
+    saveDB();
+    showToast('Agente removido!');
+  }
+}
+
+if (document.getElementById('searchAgenteConfig')) {
+  document.getElementById('searchAgenteConfig').addEventListener('input', renderAgentesTable);
+}
+
+function renderModalidadesSelects() {
+  const selFilter = document.getElementById('filterModalidade');
+  const selForm = document.getElementById('eq_modalidade');
+  
+  let opts = '<option value="">Todas Modalidades</option>';
+  let optsForm = '';
+
+  db.modalidades.forEach(m => {
+    opts += `<option value="${m.id}">${m.icone} ${m.nome}</option>`;
+    optsForm += `<option value="${m.id}">${m.icone} ${m.nome}</option>`;
+  });
+
+  selFilter.innerHTML = opts;
+  selForm.innerHTML = optsForm;
+}
+
+function renderRelatoriosView() {
+  // Espelho Dashboard no Relatório
+  const relGrid = document.getElementById('relatoriosDashboardGrid');
+  const resGrid = generateDashboardGridHTML();
+  relGrid.innerHTML = resGrid.html;
+
+  const quads = ['A', 'B', 'C'];
+  let totalAgentesGeral = 0;
+  let totalEquipesGeral = 0;
+  let totalMinimoGeral = 0;
+
+  const bodyResumo = document.getElementById('bodyResumoQuadrante');
+  const bodyDetalhes = document.getElementById('bodyDetalhamentoAgentes');
+
+  bodyResumo.innerHTML = '';
+  bodyDetalhes.innerHTML = '';
+
+  quads.forEach(q => {
+    const min = db.minimos[q] || 0;
+    totalMinimoGeral += min;
+
+    // LÓGICA DE FILTRAGEM DE ESCALA NO RELATÓRIO
+    const equipesQuad = db.equipes.filter(e => {
+      if (e.quadrante !== q) return false;
+      if (db.escalaAtiva === 'Extra') {
+        return e.escala === 'Extra';
+      }
+      return true;
+    });
+
+    let agentesQuad = 0;
+
+    equipesQuad.forEach(eq => {
+      agentesQuad += eq.integrantes ? eq.integrantes.length : 0;
+    });
+
+    totalAgentesGeral += agentesQuad;
+    totalEquipesGeral += equipesQuad.length;
+
+    const pct = min > 0 ? Math.round((agentesQuad / min) * 100) : 100;
+    let statusPill = `<span class="tag" style="background:var(--green)">${pct}% (Ideal)</span>`;
+    if(agentesQuad < min) {
+      statusPill = pct < 50 ? `<span class="tag" style="background:var(--red)">${pct}% (Crítico)</span>` : `<span class="tag" style="background:var(--amber)">${pct}% (Abaixo)</span>`;
+    }
+
+    bodyResumo.innerHTML += `
+      <tr>
+        <td><strong>Quadrante ${q}</strong></td>
+        <td>${equipesQuad.length} equipe(s)</td>
+        <td>${agentesQuad} agente(s)</td>
+        <td>${min} mínimo</td>
+        <td>${statusPill}</td>
+      </tr>
+    `;
+
+    equipesQuad.forEach(eq => {
+      const mData = db.modalidades.find(m => m.id === eq.modalidade) || { sigla: 'VTR' };
+      if(eq.integrantes && eq.integrantes.length > 0) {
+        eq.integrantes.forEach(ing => {
+          const ag = getAgenteById(ing.agenteId);
+          bodyDetalhes.innerHTML += `
+            <tr>
+              <td><span class="tag-quad">${q}</span></td>
+              <td><strong>${eq.nome}</strong></td>
+              <td>${mData.sigla}</td>
+              <td>${eq.escala}</td>
+              <td>${ag.nome}</td>
+              <td>${ag.matricula || '-'}</td>
+              <td>📞 <strong>${ag.telefone || 'Não informado'}</strong></td>
+            </tr>
+          `;
+        });
+      }
+    });
+  });
+
+  document.getElementById('repTotalAgentes').innerText = totalAgentesGeral;
+  document.getElementById('repTotalEquipes').innerText = totalEquipesGeral;
+  document.getElementById('repMetaTotal').innerText = totalMinimoGeral;
+  const coverage = totalMinimoGeral > 0 ? Math.round((totalAgentesGeral / totalMinimoGeral) * 100) : 100;
+  document.getElementById('repCoberturaPct').innerText = coverage + '%';
+}
+
+// SELEÇÃO E GESTÃO DE INTEGRANTES NO MODAL EQUIPE
+let integrantesTempEquipe = [];
+
+function filtrarDropdownAgentes() {
+  const term = document.getElementById('searchAgenteModalInput').value.toLowerCase();
+  const select = document.getElementById('selectAgenteAdd');
+  select.innerHTML = '<option value="">Selecione um agente...</option>';
+
+  const filtrados = db.agentes.filter(a => 
+    a.matricula.toLowerCase().includes(term) || a.nome.toLowerCase().includes(term)
+  );
+
+  filtrados.forEach(a => {
+    select.innerHTML += `<option value="${a.id}">Mat. ${a.matricula} — ${a.nome}</option>`;
+  });
+}
+
+function renderIntegrantesListModal() {
+  const list = document.getElementById('integrantesList');
+  list.innerHTML = '';
+
+  if (integrantesTempEquipe.length === 0) {
+    list.innerHTML = `<div style="font-size:12px;color:var(--ink-400);padding:8px;">Nenhum integrante adicionado a esta equipe.</div>`;
+    return;
+  }
+
+  integrantesTempEquipe.forEach((item, index) => {
+    const ag = getAgenteById(item.agenteId);
+    const row = document.createElement('div');
+    row.className = 'integrante-row';
+    row.innerHTML = `
+      <div style="background:#f8f9fd; border:1px solid var(--line); padding:8px 12px; border-radius:8px; font-size:13px; display:flex; justify-content:space-between; align-items:center;">
+        <div>
+          <strong>${ag.nome}</strong> (Mat. ${ag.matricula})
+        </div>
+        <div style="color:var(--ink-600); font-size:12px;">📞 ${ag.telefone || 'Sem fone'}</div>
+      </div>
+      <button type="button" class="btn btn-ghost btn-sm" onclick="removerAgenteDaEquipe(${index})">🗑️</button>
+    `;
+    list.appendChild(row);
+  });
+}
+
+function adicionarAgenteSelecionado() {
+  const select = document.getElementById('selectAgenteAdd');
+  const agenteId = select.value;
+  
+  if (!agenteId) return alert('Selecione um agente para incluir.');
+
+  if (integrantesTempEquipe.some(i => i.agenteId === agenteId)) {
+    return alert('Este agente já foi incluído na equipe.');
+  }
+
+  integrantesTempEquipe.push({ agenteId });
+  renderIntegrantesListModal();
+  select.value = '';
+}
+
+function removerAgenteDaEquipe(index) {
+  integrantesTempEquipe.splice(index, 1);
+  renderIntegrantesListModal();
+}
+
+function openEquipeModal(id = null) {
+  const modal = document.getElementById('modalEquipe');
+  integrantesTempEquipe = [];
+  document.getElementById('searchAgenteModalInput').value = '';
+  filtrarDropdownAgentes();
+
+  if (id) {
+    const eq = db.equipes.find(e => e.id === id);
+    document.getElementById('modalEquipeTitle').innerText = 'Editar Equipe';
+    document.getElementById('eq_id').value = eq.id;
+    document.getElementById('eq_nome').value = eq.nome;
+    document.getElementById('eq_modalidade').value = eq.modalidade;
+    document.getElementById('eq_quadrante').value = eq.quadrante;
+    document.getElementById('eq_escala').value = eq.escala;
+
+    if (eq.integrantes) {
+      integrantesTempEquipe = JSON.parse(JSON.stringify(eq.integrantes));
+    }
+  } else {
+    document.getElementById('modalEquipeTitle').innerText = 'Nova Equipe';
+    document.getElementById('formEquipe').reset();
+    document.getElementById('eq_id').value = '';
+  }
+
+  renderIntegrantesListModal();
+  modal.classList.add('open');
+}
+
+function salvarEquipe() {
+  const id = document.getElementById('eq_id').value;
+  const nome = document.getElementById('eq_nome').value;
+  if(!nome) return alert('Insira o nome da equipe.');
+
+  const equipeData = {
+    id: id || 'eq_' + Date.now(),
+    nome: nome,
+    modalidade: document.getElementById('eq_modalidade').value,
+    quadrante: document.getElementById('eq_quadrante').value,
+    escala: document.getElementById('eq_escala').value,
+    integrantes: integrantesTempEquipe
+  };
+
+  if (id) {
+    const idx = db.equipes.findIndex(e => e.id === id);
+    db.equipes[idx] = equipeData;
+  } else {
+    db.equipes.push(equipeData);
+  }
+
+  saveDB();
+  closeModals();
+  showToast('Equipe salva com sucesso!');
+}
+
+function deleteEquipe(id) {
+  if (confirm('Deseja realmente remover esta equipe?')) {
+    db.equipes = db.equipes.filter(e => e.id !== id);
+    saveDB();
+    showToast('Equipe removida!');
+  }
+}
+
+function openModalidadeModal(id = null) {
+  const modal = document.getElementById('modalModalidade');
+  if (id) {
+    const m = db.modalidades.find(item => item.id === id);
+    document.getElementById('modalModTitle').innerText = 'Editar Modalidade';
+    document.getElementById('mod_id').value = m.id;
+    document.getElementById('mod_nome').value = m.nome;
+    document.getElementById('mod_sigla').value = m.sigla;
+    document.getElementById('mod_icone').value = m.icone;
+    document.getElementById('mod_cor').value = m.cor;
+  } else {
+    document.getElementById('modalModTitle').innerText = 'Nova Modalidade';
+    document.getElementById('formModalidade').reset();
+    document.getElementById('mod_id').value = '';
+  }
+  modal.classList.add('open');
+}
+
+function salvarModalidade() {
+  const id = document.getElementById('mod_id').value;
+  const nome = document.getElementById('mod_nome').value;
+  if (!nome) return alert('Insira o nome da modalidade.');
+
+  const modData = {
+    id: id || 'mod_' + Date.now(),
+    nome: nome,
+    sigla: document.getElementById('mod_sigla').value,
+    icone: document.getElementById('mod_icone').value,
+    cor: document.getElementById('mod_cor').value
+  };
+
+  if (id) {
+    const idx = db.modalidades.findIndex(m => m.id === id);
+    db.modalidades[idx] = modData;
+  } else {
+    db.modalidades.push(modData);
+  }
+
+  saveDB();
+  closeModals();
+  showToast('Modalidade salva com sucesso!');
+}
+
+function deleteModalidade(id) {
+  if (confirm('Deseja remover esta modalidade?')) {
+    db.modalidades = db.modalidades.filter(m => m.id !== id);
+    saveDB();
+    showToast('Modalidade removida!');
+  }
+}
+
+document.getElementById('btnSalvarMinimos').addEventListener('click', () => {
+  ['A', 'B', 'C'].forEach(q => {
+    db.minimos[q] = parseInt(document.getElementById(`min_${q}`).value) || 0;
+  });
+  saveDB();
+  showToast('Mínimos atualizados com sucesso!');
+});
+
+// =========================================================
+// FUNÇÃO UTILITÁRIA PARA EXPORTAÇÃO VISUAL EXATA (CANVAS -> PDF)
+// =========================================================
+async function exportarElementoParaPDFVisual(elementId, tituloDocumento, orientation = 'p') {
+  showToast('Renderizando PDF com visual exato...');
+
+  const { jsPDF } = window.jspdf;
+  const isLandscape = orientation === 'l' || orientation === 'landscape';
+  const doc = new jsPDF(isLandscape ? 'l' : 'p', 'mm', 'a4');
+
+  const dataSel = document.getElementById('mapDate').value;
+  const dataFormatada = new Date(dataSel + 'T00:00:00').toLocaleDateString('pt-BR');
+  const targetElement = document.getElementById(elementId);
+
+  try {
+    const canvas = await html2canvas(targetElement, {
+      scale: 2,
+      useCORS: true,
+      allowTaint: true,
+      logging: false
+    });
+
+    const imgData = canvas.toDataURL('image/png');
+    
+    const pdfPageWidth = isLandscape ? 297 : 210;
+    const pdfPageHeight = isLandscape ? 210 : 297;
+    
+    const margin = 14;
+    const imgWidth = pdfPageWidth - (margin * 2); 
+    const pageHeight = pdfPageHeight - 37;
+    const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+    let heightLeft = imgHeight;
+    let position = 26;
+
+    const drawHeader = () => {
+      doc.setFillColor(11, 24, 48);
+      doc.rect(0, 0, pdfPageWidth, 22, 'F');
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(12);
+      doc.setFont('helvetica', 'bold');
+      doc.text("GUARDA MUNICIPAL DO RECIFE", margin, 10);
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'normal');
+      doc.text(`${tituloDocumento} — ESCALA ${db.escalaAtiva.toUpperCase()}`, margin, 16);
+      doc.text(`Data: ${dataFormatada}`, pdfPageWidth - margin - 35, 16);
+    };
+
+    drawHeader();
+    doc.addImage(imgData, 'PNG', margin, position, imgWidth, imgHeight);
+    heightLeft -= pageHeight;
+
+    while (heightLeft > 0) {
+      position = heightLeft - imgHeight + 26;
+      doc.addPage();
+      drawHeader();
+      doc.addImage(imgData, 'PNG', margin, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
+    }
+
+    const totalPages = doc.internal.getNumberOfPages();
+    for (let i = 1; i <= totalPages; i++) {
+      doc.setPage(i);
+      doc.setFontSize(8);
+      doc.setTextColor(150);
+      doc.text(`Documento gerado em ${new Date().toLocaleString('pt-BR')} — Página ${i} de ${totalPages}`, margin, pdfPageHeight - 5);
+    }
+
+    doc.save(`${tituloDocumento.replace(/\s+/g, '_')}_Visual_${dataFormatada.replace(/\//g, '-')}.pdf`);
+    showToast('PDF Visual gerado com sucesso!');
+  } catch (err) {
+    console.error("Erro ao gerar PDF Visual:", err);
+    alert("Ocorreu um erro ao capturar a tela para PDF.");
+  }
+}
+
+// Botão Visual Exato no Dashboard (EXPORTAÇÃO HORIZONTAL / LANDSCAPE)
+document.getElementById('btnExportarDashboardVisualPDF').addEventListener('click', () => {
+  exportarElementoParaPDFVisual('painelDashboardContainer', 'MAPA DE FORCA DASHBOARD', 'landscape');
+});
+
+// Exportar PDF (Visual Exato) na Aba Relatórios
+document.getElementById('btnExportarVisualPDF').addEventListener('click', () => {
+  exportarElementoParaPDFVisual('relatoriosCapturaContainer', 'RELATORIO OPERACIONAL VISUAL', 'portrait');
+});
+
+// PDF ESTRUTURADO POR DADOS
+document.getElementById('btnGerarPDF').addEventListener('click', () => {
+  showToast('Gerando PDF Estruturado dos Relatórios...');
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF('p', 'mm', 'a4');
+
+  const dataSel = document.getElementById('mapDate').value;
+  const dataFormatada = new Date(dataSel + 'T00:00:00').toLocaleDateString('pt-BR');
+
+  // Cabeçalho Oficial
+  doc.setFillColor(11, 24, 48);
+  doc.rect(0, 0, 210, 25, 'F');
+  doc.setTextColor(255, 255, 255);
+  doc.setFontSize(13);
+  doc.setFont('helvetica', 'bold');
+  doc.text("GUARDA MUNICIPAL DO RECIFE", 14, 11);
+  doc.setFontSize(9);
+  doc.setFont('helvetica', 'normal');
+  doc.text(`RELATÓRIO OPERACIONAL DE MAPA DE FORÇA - ESCALA ${db.escalaAtiva.toUpperCase()}`, 14, 18);
+  doc.text(`Data: ${dataFormatada}`, 160, 18);
+
+  let finalY = 32;
+
+  // 1. Resumo por Quadrante
+  doc.setTextColor(16, 24, 40);
+  doc.setFontSize(11);
+  doc.setFont('helvetica', 'bold');
+  doc.text("1. Resumo do Efetivo por Quadrante", 14, finalY);
+
+  const resRows = [];
+  ['A', 'B', 'C'].forEach(q => {
+    const min = db.minimos[q] || 0;
+    const equipesQuad = db.equipes.filter(e => {
+      if (e.quadrante !== q) return false;
+      if (db.escalaAtiva === 'Extra') return e.escala === 'Extra';
+      return true;
+    });
+
+    let ag = 0;
+    equipesQuad.forEach(e => ag += (e.integrantes ? e.integrantes.length : 0));
+    const pct = min > 0 ? Math.round((ag / min) * 100) + '%' : '100%';
+    resRows.push([`Quadrante ${q}`, `${equipesQuad.length} equipe(s)`, `${ag} agente(s)`, `${min}`, pct]);
+  });
+
+  doc.autoTable({
+    startY: finalY + 4,
+    head: [['Quadrante', 'Equipes', 'Efetivo Presente', 'Efetivo Mínimo', 'Cobertura (%)']],
+    body: resRows,
+    theme: 'grid',
+    headStyles: { fillStyle: 'F', fillColor: [18, 35, 73] }
+  });
+
+  finalY = doc.lastAutoTable.finalY + 10;
+
+  // 2. Detalhamento
+  doc.setFontSize(11);
+  doc.setFont('helvetica', 'bold');
+  doc.text("2. Detalhamento de Equipes, Agentes e Contatos Telefônicos", 14, finalY);
+
+  const detRows = [];
+  ['A', 'B', 'C'].forEach(q => {
+    const equipesQuad = db.equipes.filter(e => {
+      if (e.quadrante !== q) return false;
+      if (db.escalaAtiva === 'Extra') return e.escala === 'Extra';
+      return true;
+    });
+
+    equipesQuad.forEach(eq => {
+      const mData = db.modalidades.find(m => m.id === eq.modalidade) || { sigla: 'VTR' };
+      if(eq.integrantes && eq.integrantes.length > 0) {
+        eq.integrantes.forEach(ing => {
+          const ag = getAgenteById(ing.agenteId);
+          detRows.push([
+            `Quad. ${q}`,
+            eq.nome,
+            mData.sigla,
+            ag.nome,
+            ag.matricula || '-',
+            ag.telefone || 'Não Informado'
+          ]);
+        });
+      }
+    });
+  });
+
+  doc.autoTable({
+    startY: finalY + 4,
+    head: [['Quad.', 'Equipe', 'Modalidade', 'Agente', 'Matrícula', 'Contato Telefônico']],
+    body: detRows,
+    theme: 'striped',
+    headStyles: { fillStyle: 'F', fillColor: [47, 111, 237] }
+  });
+
+  // Rodapé
+  const pageCount = doc.internal.getNumberOfPages();
+  for(let i = 1; i <= pageCount; i++) {
+    doc.setPage(i);
+    doc.setFontSize(8);
+    doc.setTextColor(150);
+    doc.text(`Documento gerado em ${new Date().toLocaleString('pt-BR')} — Página ${i} de ${pageCount}`, 14, 287);
+  }
+
+  doc.save(`Relatorio_Operacional_GMR_${dataFormatada.replace(/\//g, '-')}.pdf`);
+  showToast('Relatório PDF exportado com sucesso!');
+});
+
+document.getElementById('searchEquipe').addEventListener('input', renderEquipes);
+document.getElementById('filterQuadrante').addEventListener('change', renderEquipes);
+document.getElementById('filterModalidade').addEventListener('change', renderEquipes);
+document.getElementById('mapDate').addEventListener('change', () => { renderDashboard(); renderRelatoriosView(); });
+document.getElementById('btnNovaEquipe').addEventListener('click', () => openEquipeModal());
+document.getElementById('btnNovaModalidade').addEventListener('click', () => openModalidadeModal());
+
+function closeModals() {
+  document.querySelectorAll('.overlay').forEach(m => m.classList.remove('open'));
+}
+
+renderAll();
+</script>
+
+</body>
+</html>
