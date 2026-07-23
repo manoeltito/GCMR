@@ -233,12 +233,10 @@
       <p>Selecione a data e a escala para verificar a distribuição operacional.</p>
     </div>
     <div class="btn-group">
-      <!-- Botão Visual Exato (Horizontal/Paisagem) -->
       <button class="btn btn-secondary" id="btnExportarDashboardVisualPDF">📸 Exportar PDF (Visual Exato)</button>
     </div>
   </div>
 
-  <!-- Contêiner capturável do painel -->
   <div id="painelDashboardContainer">
     <div class="filterbar">
       <div class="field">
@@ -249,7 +247,8 @@
         <label>Escala</label>
         <div class="escala-toggle">
           <button class="active" data-escala="Total" id="escTotal">Total</button>
-          <button data-escala="Extra" id="escExt">Extra</button>
+          <button data-escala="Ordinária" id="escOrd">Ordinária</button>
+          <button data-escala="Extras" id="escExt">Extras</button>
         </div>
       </div>
       <div class="map-summary" id="mapSummary">
@@ -325,7 +324,6 @@
       </div>
     </div>
 
-    <!-- PAINEL AGENTES NAS CONFIGURAÇÕES -->
     <div class="card">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
         <span style="font-weight:800;text-transform:uppercase;font-size:12px;">Cadastro de Agentes</span>
@@ -376,15 +374,11 @@
       <p>Visão consolidada do Dashboard com totais, quantitativos por quadrante e contatos telefônicos.</p>
     </div>
     <div class="btn-group">
-      <!-- BOTÃO 1: EXISTENTE -->
       <button class="btn btn-primary" id="btnGerarPDF">📥 Exportar PDF do Relatório</button>
-      
-      <!-- BOTÃO 2: NOVO (IMPRESSÃO DE VISUAL EXATO DA PÁGINA) -->
       <button class="btn btn-secondary" id="btnExportarVisualPDF">🖼️ Imprimir PDF (Visual Exato)</button>
     </div>
   </div>
 
-  <!-- Envolto por um contêiner para captura exata -->
   <div id="relatoriosCapturaContainer">
     <!-- Cards de Totais Gerais -->
     <div class="stats-strip">
@@ -480,8 +474,8 @@
           <div class="form-field full">
             <label>Escala</label>
             <select id="eq_escala" required>
-              <option value="Ordinário">Ordinário</option>
-              <option value="Extra">Extra</option>
+              <option value="Ordinária">Ordinária</option>
+              <option value="Extras">Extras</option>
             </select>
           </div>
         </div>
@@ -490,7 +484,6 @@
           <span>Integrantes Selecionados</span>
         </div>
         
-        <!-- BUSCA E ADIÇÃO DE AGENTE -->
         <div style="display:flex; gap:8px; margin-top:10px; margin-bottom:14px;">
           <input type="text" id="searchAgenteModalInput" placeholder="🔍 Buscar por Matrícula ou Nome..." style="flex:1; padding:8px 12px; border-radius:8px; border:1px solid var(--line); font-size:13px;" oninput="filtrarDropdownAgentes()">
           <select id="selectAgenteAdd" style="flex:1.5; padding:8px 12px; border-radius:8px; border:1px solid var(--line); font-size:13px;">
@@ -575,15 +568,15 @@ const DEFAULT_AGENTES = [
 ];
 
 const DEFAULT_EQUIPES = [
-  { id: 'eq_1', nome: 'VTRA-01', modalidade: 'moto', quadrante: 'A', escala: 'Ordinário', integrantes: [{agenteId:'ag_123'}, {agenteId:'ag_124'}] },
-  { id: 'eq_2', nome: 'BCA-01', modalidade: 'bike', quadrante: 'A', escala: 'Ordinário', integrantes: [{agenteId:'ag_125'}, {agenteId:'ag_126'}] },
-  { id: 'eq_3', nome: 'VTRC-01', modalidade: 'vtr', quadrante: 'A', escala: 'Extra', integrantes: [{agenteId:'ag_127'}, {agenteId:'ag_128'}] },
+  { id: 'eq_1', nome: 'VTRA-01', modalidade: 'moto', quadrante: 'A', escala: 'Ordinária', integrantes: [{agenteId:'ag_123'}, {agenteId:'ag_124'}] },
+  { id: 'eq_2', nome: 'BCA-01', modalidade: 'bike', quadrante: 'A', escala: 'Ordinária', integrantes: [{agenteId:'ag_125'}, {agenteId:'ag_126'}] },
+  { id: 'eq_3', nome: 'VTRC-01', modalidade: 'vtr', quadrante: 'A', escala: 'Extras', integrantes: [{agenteId:'ag_127'}, {agenteId:'ag_128'}] },
   
-  { id: 'eq_4', nome: 'MTB-01', modalidade: 'moto', quadrante: 'B', escala: 'Ordinário', integrantes: [{agenteId:'ag_129'}, {agenteId:'ag_130'}] },
-  { id: 'eq_5', nome: 'PTB-01', modalidade: 'ape', quadrante: 'B', escala: 'Extra', integrantes: [{agenteId:'ag_131'}, {agenteId:'ag_132'}] },
-  { id: 'eq_6', nome: 'ROMU-01', modalidade: 'romu', quadrante: 'B', escala: 'Ordinário', integrantes: [{agenteId:'ag_133'}, {agenteId:'ag_134'}] },
+  { id: 'eq_4', nome: 'MTB-01', modalidade: 'moto', quadrante: 'B', escala: 'Ordinária', integrantes: [{agenteId:'ag_129'}, {agenteId:'ag_130'}] },
+  { id: 'eq_5', nome: 'PTB-01', modalidade: 'ape', quadrante: 'B', escala: 'Extras', integrantes: [{agenteId:'ag_131'}, {agenteId:'ag_132'}] },
+  { id: 'eq_6', nome: 'ROMU-01', modalidade: 'romu', quadrante: 'B', escala: 'Ordinária', integrantes: [{agenteId:'ag_133'}, {agenteId:'ag_134'}] },
 
-  { id: 'eq_7', nome: 'VTRC-01', modalidade: 'vtr', quadrante: 'C', escala: 'Extra', integrantes: [{agenteId:'ag_135'}, {agenteId:'ag_136'}] }
+  { id: 'eq_7', nome: 'VTRC-01', modalidade: 'vtr', quadrante: 'C', escala: 'Extras', integrantes: [{agenteId:'ag_135'}, {agenteId:'ag_136'}] }
 ];
 
 const DEFAULT_MINIMOS = { A: 4, B: 6, C: 4 };
@@ -593,11 +586,14 @@ let db = {
   agentes: JSON.parse(localStorage.getItem('gmr_agentes')) || DEFAULT_AGENTES,
   equipes: JSON.parse(localStorage.getItem('gmr_equipes')) || DEFAULT_EQUIPES,
   minimos: JSON.parse(localStorage.getItem('gmr_minimos')) || DEFAULT_MINIMOS,
-  escalaAtiva: 'Total' // Padrão 'Total'
+  escalaAtiva: 'Total'
 };
 
-// Converte equipes antigas (se houver no localStorage) para estrutura por ID do agente
+// Converte nomenclaturas de escalas antigas para compatibilidade
 db.equipes.forEach(eq => {
+  if (eq.escala === 'Ordinário') eq.escala = 'Ordinária';
+  if (eq.escala === 'Extra') eq.escala = 'Extras';
+  
   if (eq.integrantes) {
     eq.integrantes = eq.integrantes.map(i => {
       if (i.agenteId) return i;
@@ -608,6 +604,8 @@ db.equipes.forEach(eq => {
       }
       return { agenteId: achado.id };
     });
+  } else {
+    eq.integrantes = [];
   }
 });
 
@@ -678,13 +676,12 @@ function generateDashboardGridHTML() {
   quads.forEach(q => {
     const min = db.minimos[q] || 0;
     
-    // LÓGICA DE FILTRAGEM POR ESCALA (Total x Extra)
+    // Filtro estrito de Escalas
     const equipesQuad = db.equipes.filter(e => {
       if (e.quadrante !== q) return false;
-      if (db.escalaAtiva === 'Extra') {
-        return e.escala === 'Extra';
-      }
-      return true; // Se for 'Total', traz todas as equipes (Ordinário + Extra)
+      if (db.escalaAtiva === 'Ordinária') return e.escala === 'Ordinária';
+      if (db.escalaAtiva === 'Extras') return e.escala === 'Extras';
+      return true; // Se for 'Total', traz todos
     });
     
     let agentesQuad = 0;
@@ -730,7 +727,7 @@ function generateDashboardGridHTML() {
       teamsHtml = `<div class="empty-state" style="padding:10px;">Nenhuma equipe alocada</div>`;
     } else {
       equipesQuad.forEach(eq => {
-        const mData = db.modalidades.find(m => m.id === eq.modalidade) || { icone: '🚓', nome: 'Outro', sigla: 'VTR', cor: '#333' };
+        const mData = db.modalidades.find(m => m.id === eq.modalidade) || { icone: 'i', nome: 'Outro', sigla: 'VTR', cor: '#333' };
         teamsHtml += `
           <div class="team-row">
             <div>
@@ -814,14 +811,16 @@ function renderEquipes() {
   document.getElementById('equipesEmpty').style.display = 'none';
 
   filtered.forEach(eq => {
-    const mData = db.modalidades.find(m => m.id === eq.modalidade) || { icone: '🚓', sigla: 'VTR', cor: '#333' };
+    const mData = db.modalidades.find(m => m.id === eq.modalidade) || { icone: 'i', sigla: 'VTR', cor: '#333' };
     
     let integrantesHtml = '<ul style="margin:0;padding-left:16px;font-size:12px;">';
-    if(eq.integrantes) {
+    if(eq.integrantes && eq.integrantes.length > 0) {
       eq.integrantes.forEach(i => {
         const ag = getAgenteById(i.agenteId);
         integrantesHtml += `<li><strong>${ag.nome}</strong> (Mat. ${ag.matricula}) - 📞 ${ag.telefone || 'Sem fone'}</li>`;
       });
+    } else {
+      integrantesHtml += '<li style="color:var(--ink-400);">Nenhum agente vinculado</li>';
     }
     integrantesHtml += '</ul>';
 
@@ -872,7 +871,6 @@ function renderConfig() {
   });
 }
 
-// CADASTRO E GERENCIAMENTO DE AGENTES
 function renderAgentesTable() {
   const tbody = document.getElementById('agentesTableBody');
   const search = (document.getElementById('searchAgenteConfig') ? document.getElementById('searchAgenteConfig').value : '').toLowerCase();
@@ -916,7 +914,6 @@ function salvarAgente() {
       db.agentes[idx] = { id, matricula: mat, nome, telefone: tel };
     }
   } else {
-    // Evita matriculas duplicadas
     if (db.agentes.some(a => a.matricula === mat)) {
       return alert('Já existe um agente cadastrado com esta matrícula.');
     }
@@ -952,7 +949,6 @@ function cancelarEdicaoAgente() {
 function deletarAgente(id) {
   if (confirm('Deseja remover este agente?')) {
     db.agentes = db.agentes.filter(a => a.id !== id);
-    // Remove o agente de equipes existentes
     db.equipes.forEach(eq => {
       if (eq.integrantes) {
         eq.integrantes = eq.integrantes.filter(i => i.agenteId !== id);
@@ -983,8 +979,8 @@ function renderModalidadesSelects() {
   selForm.innerHTML = optsForm;
 }
 
+// RENDERIZAÇÃO DA ABA RELATÓRIOS
 function renderRelatoriosView() {
-  // Espelho Dashboard no Relatório
   const relGrid = document.getElementById('relatoriosDashboardGrid');
   const resGrid = generateDashboardGridHTML();
   relGrid.innerHTML = resGrid.html;
@@ -1000,23 +996,23 @@ function renderRelatoriosView() {
   bodyResumo.innerHTML = '';
   bodyDetalhes.innerHTML = '';
 
+  let totalLinhasDetalhamento = 0;
+
   quads.forEach(q => {
     const min = db.minimos[q] || 0;
     totalMinimoGeral += min;
 
-    // LÓGICA DE FILTRAGEM DE ESCALA NO RELATÓRIO
     const equipesQuad = db.equipes.filter(e => {
       if (e.quadrante !== q) return false;
-      if (db.escalaAtiva === 'Extra') {
-        return e.escala === 'Extra';
-      }
-      return true;
+      if (db.escalaAtiva === 'Ordinária') return e.escala === 'Ordinária';
+      if (db.escalaAtiva === 'Extras') return e.escala === 'Extras';
+      return true; // Escala 'Total' engloba tudo
     });
 
     let agentesQuad = 0;
 
     equipesQuad.forEach(eq => {
-      agentesQuad += eq.integrantes ? eq.integrantes.length : 0;
+      agentesQuad += (eq.integrantes ? eq.integrantes.length : 0);
     });
 
     totalAgentesGeral += agentesQuad;
@@ -1040,24 +1036,43 @@ function renderRelatoriosView() {
 
     equipesQuad.forEach(eq => {
       const mData = db.modalidades.find(m => m.id === eq.modalidade) || { sigla: 'VTR' };
-      if(eq.integrantes && eq.integrantes.length > 0) {
+      
+      if (eq.integrantes && eq.integrantes.length > 0) {
         eq.integrantes.forEach(ing => {
           const ag = getAgenteById(ing.agenteId);
+          totalLinhasDetalhamento++;
           bodyDetalhes.innerHTML += `
             <tr>
               <td><span class="tag-quad">${q}</span></td>
               <td><strong>${eq.nome}</strong></td>
               <td>${mData.sigla}</td>
-              <td>${eq.escala}</td>
+              <td><span class="tag-escala">${eq.escala}</span></td>
               <td>${ag.nome}</td>
               <td>${ag.matricula || '-'}</td>
               <td>📞 <strong>${ag.telefone || 'Não informado'}</strong></td>
             </tr>
           `;
         });
+      } else {
+        totalLinhasDetalhamento++;
+        bodyDetalhes.innerHTML += `
+          <tr>
+            <td><span class="tag-quad">${q}</span></td>
+            <td><strong>${eq.nome}</strong></td>
+            <td>${mData.sigla}</td>
+            <td><span class="tag-escala">${eq.escala}</span></td>
+            <td style="color:var(--ink-400); font-style:italic;">(Sem agente vinculado)</td>
+            <td>-</td>
+            <td>-</td>
+          </tr>
+        `;
       }
     });
   });
+
+  if (totalLinhasDetalhamento === 0) {
+    bodyDetalhes.innerHTML = `<tr><td colspan="7" style="text-align:center; color:var(--ink-400); padding:16px;">Nenhuma equipe ou agente registrado para esta escala (${db.escalaAtiva}).</td></tr>`;
+  }
 
   document.getElementById('repTotalAgentes').innerText = totalAgentesGeral;
   document.getElementById('repTotalEquipes').innerText = totalEquipesGeral;
@@ -1066,7 +1081,6 @@ function renderRelatoriosView() {
   document.getElementById('repCoberturaPct').innerText = coverage + '%';
 }
 
-// SELEÇÃO E GESTÃO DE INTEGRANTES NO MODAL EQUIPE
 let integrantesTempEquipe = [];
 
 function filtrarDropdownAgentes() {
@@ -1088,7 +1102,7 @@ function renderIntegrantesListModal() {
   list.innerHTML = '';
 
   if (integrantesTempEquipe.length === 0) {
-    list.innerHTML = `<div style="font-size:12px;color:var(--ink-400);padding:8px;">Nenhum integrante adicionado a esta equipe.</div>`;
+    list.innerHTML = `<div style="font-size:12px;color:var(--ink-400);padding:8px;">Nenum integrante adicionado a esta equipe.</div>`;
     return;
   }
 
@@ -1250,9 +1264,7 @@ document.getElementById('btnSalvarMinimos').addEventListener('click', () => {
   showToast('Mínimos atualizados com sucesso!');
 });
 
-// =========================================================
-// FUNÇÃO UTILITÁRIA PARA EXPORTAÇÃO VISUAL EXATA (CANVAS -> PDF)
-// =========================================================
+// EXPORTAÇÃO VISUAL EXATA (CANVAS -> PDF)
 async function exportarElementoParaPDFVisual(elementId, tituloDocumento, orientation = 'p') {
   showToast('Renderizando PDF com visual exato...');
 
@@ -1326,12 +1338,10 @@ async function exportarElementoParaPDFVisual(elementId, tituloDocumento, orienta
   }
 }
 
-// Botão Visual Exato no Dashboard (EXPORTAÇÃO HORIZONTAL / LANDSCAPE)
 document.getElementById('btnExportarDashboardVisualPDF').addEventListener('click', () => {
   exportarElementoParaPDFVisual('painelDashboardContainer', 'MAPA DE FORCA DASHBOARD', 'landscape');
 });
 
-// Exportar PDF (Visual Exato) na Aba Relatórios
 document.getElementById('btnExportarVisualPDF').addEventListener('click', () => {
   exportarElementoParaPDFVisual('relatoriosCapturaContainer', 'RELATORIO OPERACIONAL VISUAL', 'portrait');
 });
@@ -1346,7 +1356,6 @@ document.getElementById('btnGerarPDF').addEventListener('click', () => {
   const dataSel = document.getElementById('mapDate').value;
   const dataFormatada = new Date(dataSel + 'T00:00:00').toLocaleDateString('pt-BR');
 
-  // Cabeçalho Oficial
   doc.setFillColor(11, 24, 48);
   doc.rect(0, 0, 210, 25, 'F');
   doc.setTextColor(255, 255, 255);
@@ -1371,7 +1380,8 @@ document.getElementById('btnGerarPDF').addEventListener('click', () => {
     const min = db.minimos[q] || 0;
     const equipesQuad = db.equipes.filter(e => {
       if (e.quadrante !== q) return false;
-      if (db.escalaAtiva === 'Extra') return e.escala === 'Extra';
+      if (db.escalaAtiva === 'Ordinária') return e.escala === 'Ordinária';
+      if (db.escalaAtiva === 'Extras') return e.escala === 'Extras';
       return true;
     });
 
@@ -1400,7 +1410,8 @@ document.getElementById('btnGerarPDF').addEventListener('click', () => {
   ['A', 'B', 'C'].forEach(q => {
     const equipesQuad = db.equipes.filter(e => {
       if (e.quadrante !== q) return false;
-      if (db.escalaAtiva === 'Extra') return e.escala === 'Extra';
+      if (db.escalaAtiva === 'Ordinária') return e.escala === 'Ordinária';
+      if (db.escalaAtiva === 'Extras') return e.escala === 'Extras';
       return true;
     });
 
@@ -1413,24 +1424,38 @@ document.getElementById('btnGerarPDF').addEventListener('click', () => {
             `Quad. ${q}`,
             eq.nome,
             mData.sigla,
+            eq.escala,
             ag.nome,
             ag.matricula || '-',
             ag.telefone || 'Não Informado'
           ]);
         });
+      } else {
+        detRows.push([
+          `Quad. ${q}`,
+          eq.nome,
+          mData.sigla,
+          eq.escala,
+          '(Sem agente vinculado)',
+          '-',
+          '-'
+        ]);
       }
     });
   });
 
+  if (detRows.length === 0) {
+    detRows.push(['-', '-', '-', '-', 'Nenhum registro encontrado', '-', '-']);
+  }
+
   doc.autoTable({
     startY: finalY + 4,
-    head: [['Quad.', 'Equipe', 'Modalidade', 'Agente', 'Matrícula', 'Contato Telefônico']],
+    head: [['Quad.', 'Equipe', 'Modalidade', 'Escala', 'Agente', 'Matrícula', 'Contato Telefônico']],
     body: detRows,
     theme: 'striped',
     headStyles: { fillStyle: 'F', fillColor: [47, 111, 237] }
   });
 
-  // Rodapé
   const pageCount = doc.internal.getNumberOfPages();
   for(let i = 1; i <= pageCount; i++) {
     doc.setPage(i);
